@@ -1,0 +1,1 @@
+Annotations or labels for each image, possibly in a structured format like JSON or CSV.
