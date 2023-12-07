@@ -1,0 +1,4 @@
+{
+    "img_001.jpg": [{"object": "Ace of Hearts", "bbox": [x1, y1, x2, y2]}],
+    "img_002.jpg": [{"object": "King of Spades", "bbox": [x1, y1, x2, y2]}]
+}
