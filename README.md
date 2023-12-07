@@ -5,7 +5,7 @@ JassCardDetector is a project for recognizing Jass playing cards using image pro
 
 
 
-*Project structure:*
+***Project structure:***
 
 1. **Data**: This folder will contain the datasets you use for training and testing your neural network. It can be further subdivided into:
    - **Raw**: Original, unprocessed images of Jass cards.
