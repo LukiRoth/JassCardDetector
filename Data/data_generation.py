@@ -112,7 +112,7 @@ if not os.path.exists(dest_folder):
     os.makedirs(dest_folder)
 
 # Process the images
-num_generated_images_per_original = 5 
+num_generated_images_per_original = 300 
 process_images(source_folder, dest_folder, num_generated_images_per_original)
 
 print("Image processing completed.")
