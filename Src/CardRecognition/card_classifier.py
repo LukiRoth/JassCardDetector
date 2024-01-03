@@ -4,11 +4,10 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torchvision import datasets, transforms
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset, DataLoader, random_split
+import torch.nn.functional as F
 from PIL import Image
-import re
-
-num_epochs = 100
+from sklearn.metrics import accuracy_score
 
 # Function to download dataset
 def download_dataset(dataset_path, kaggle_path):
@@ -20,105 +19,141 @@ def download_dataset(dataset_path, kaggle_path):
         print("Dataset already exists. Skipping download.")
 
 # Download Jass Card Dataset
-dataset_path = 'Data/Processed/database'
+dataset_path = '../../Data/Processed/database'
 kaggle_path = 'pbegert/swiss-jass-cards'
 download_dataset(dataset_path, kaggle_path)
+
+
+def create_card_mapping():
+    suits = ['E', 'H', 'S', 'K']  # Ecke, Herz, Schaufel, Kreuz
+    values = ['0', '1', '2', '3', '4', '5', '6', '7', '8']
+    mapping = {}
+    class_id = 0
+    for suit in suits:
+        for value in values:
+            mapping[f'{suit}_{value}'] = class_id
+            class_id += 1
+    print(mapping)
+    return mapping
+
+card_mapping = create_card_mapping()
 
 # Custom dataset class
 class JassCardDataset(Dataset):
     def __init__(self, directory, transform=None):
         self.directory = directory
         self.transform = transform
-        self.images = os.listdir(directory)
+        self.images = [img for img in os.listdir(directory) if img.endswith(('.png', '.jpg', '.jpeg'))]  # Filter for image files
+        self.mapping = create_card_mapping()
 
     def __len__(self):
         return len(self.images)
-    
-    @staticmethod
-    def extract_label(filename):
-        # Regex pattern to match filenames like 'E_2_256.jpg', capturing 'E' and '2'
-        match = re.match(r"([a-zA-Z])_(\d+)_\d+\.jpg", filename)
-        if match:
-            group = match.group(1)
-            value = match.group(2)
-            print(f"Filename '{filename}' processed")
-            return JassCardDataset.label_to_int(group), JassCardDataset.value_to_int(value)
-        else:
-            print(f"Warning: Filename '{filename}' does not match expected format", end='\r')
-            return None, None
 
-    @staticmethod
-    def label_to_int(label_char):
-        # Map label characters to integers
-        mapping = {'H': 0, 'E': 1, 'S': 2, 'K': 3}  # Add other mappings as needed
-        return mapping.get(label_char, -1)  # Returns -1 if label_char not in mapping
-
-    @staticmethod
-    def value_to_int(value_str):
-        # Map value strings to integers
-        mapping = {'6': 0, '7': 1, '8': 2, '9': 3, '10': 4, 'J': 5, 'Q': 6, 'K': 7, 'A': 8}
-        return mapping.get(value_str, -1)  # Returns -1 if value_str not in mapping
-    
     def __getitem__(self, idx):
         img_name = os.path.join(self.directory, self.images[idx])
         image = Image.open(img_name)
         label = self.extract_label(self.images[idx])
 
-        if label == (None, None):  # Skip files with unexpected format
-            return None
-
         if self.transform:
             image = self.transform(image)
 
-        return image, torch.tensor(label)  # Ensure labels are tensors
+        return image, label
 
+    def extract_label(self, filename):
+        # Attempt to extract the card ID from the filename
+        card_id = filename.split('_')[0] + '_' + filename.split('_')[1]
+        label = self.mapping.get(card_id, None)
 
+        # Debugging print statements
+        if label is None:
+            print(f"Unmapped label for file: {filename}, Extracted card_id: {card_id}")
+
+        return label
+    
 # Define transformations
 transform = transforms.Compose([
-    transforms.Resize((256, 256)),
+    transforms.Resize((64, 64)),
     transforms.ToTensor()
 ])
 
-
 # Create dataset
 jass_dataset = JassCardDataset(directory=dataset_path, transform=transform)
-train_loader = DataLoader(jass_dataset, batch_size=32, shuffle=True)
+print("Dataset size:", len(jass_dataset))
+# Define the size of the validation set
 
-# Filter out None values
-filtered_dataset = [data for data in jass_dataset if data is not None]
-train_loader = DataLoader(filtered_dataset, batch_size=32, shuffle=True)
+validation_size = int(0.2 * len(jass_dataset))  # 20% for validation
+train_size = len(jass_dataset) - validation_size
 
-class SimpleCNN(nn.Module):
+# Split the dataset
+train_dataset, validation_dataset = random_split(jass_dataset, [train_size, validation_size])
+
+# Create DataLoaders for both training and validation sets
+train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
+validation_loader = DataLoader(validation_dataset, batch_size=32, shuffle=False)
+
+class CNN(nn.Module):
     def __init__(self):
-        super(SimpleCNN, self).__init__()
-        self.conv1 = nn.Conv2d(3, 32, 3, 1)
-        self.conv2 = nn.Conv2d(32, 64, 3, 1)
-        self.fc1 = nn.Linear(64 * 62 * 62, 128)
-        self.fc2 = nn.Linear(128, 13)  # num_classes is the number of card types
+        super(CNN, self).__init__()
+
+        self.conv1 = nn.Conv2d(3, 32, kernel_size=3, stride=1, padding=1)
+        self.conv2 = nn.Conv2d(32, 64, kernel_size=3, stride=1, padding=1)
+        self.conv3 = nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1)
+        self.pool = nn.MaxPool2d(kernel_size=2, stride=2, padding=0)
+        self.dropout = nn.Dropout(0.5)
+
+        # After conv1 and pool: 64x64 -> 32x32
+        # After conv2 and pool: 32x32 -> 16x16
+        # After conv3 and pool: 16x16 -> 8x8
+        self.fc1 = nn.Linear(128 * 8 * 8, 512)
+        self.fc2 = nn.Linear(512, 128)
+        self.fc3 = nn.Linear(128, len(card_mapping))
 
     def forward(self, x):
-        x = torch.relu(self.conv1(x))
-        x = torch.relu(self.conv2(x))
+        x = self.pool(F.relu(self.conv1(x)))
+        x = self.pool(F.relu(self.conv2(x)))
+        x = self.pool(F.relu(self.conv3(x)))
         x = torch.flatten(x, 1)
-        x = torch.relu(self.fc1(x))
-        x = self.fc2(x)
+        x = F.relu(self.fc1(x))
+        x = self.dropout(x)  # Apply dropout
+        x = F.relu(self.fc2(x))
+        x = self.fc3(x)
         return x
-
-# Step 3: Set Up Loss Function and Optimizer
-model = SimpleCNN()
+    
+model = CNN()
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=0.001)
 
-# Step 4: Train the Model
+num_epochs = 20
+
 for epoch in range(num_epochs):
-    for data in train_loader:
-        if data is None:  # Skip over None data items
-            continue
-        inputs, targets = data
+    model.train()  # Set the model to training mode
+    # Training loop
+    for inputs, targets in train_loader:
         optimizer.zero_grad()
         outputs = model(inputs)
         loss = criterion(outputs, targets)
         loss.backward()
         optimizer.step()
 
-    print(f"Epoch {epoch}, Loss: {loss.item()}")
+    # Validation loop
+    model.eval()  # Set the model to evaluation mode
+    valid_loss = 0
+    all_targets = []
+    all_predictions = []
+    with torch.no_grad():
+        for inputs, targets in validation_loader:
+            outputs = model(inputs)
+            loss = criterion(outputs, targets)
+            valid_loss += loss.item()
+
+            _, predicted = torch.max(outputs.data, 1)
+            all_targets.extend(targets)
+            all_predictions.extend(predicted)
+
+    # Calculate validation accuracy
+    accuracy = accuracy_score(all_targets, all_predictions)
+    print(f"Epoch {epoch}, Training Loss: {loss.item()}, Validation Loss: {valid_loss / len(validation_loader)}, Accuracy: {accuracy}")
+
+
+# Save the entire model
+torch.save(model, 'jass_card_classifier_model.pth')
