@@ -53,7 +53,7 @@ print("Absolute dataset path:", absolute_dataset_path)
 
 def create_card_mapping():
     suits = ['E', 'H', 'S', 'K']  # Ecke, Herz, Schaufel, Kreuz
-    values = ['0', '1', '2', '3', '4', '5', '6', '7', '8']
+    values = ['0', '1', '2', '3', '4', '5', '6', '7', '8'] # 0 = Ass, 1 = König, 2 = Dame, 3 = Bauer, 4 = 10, 5 = 9, 6 = 8, 7 = 7, 8 = 6
     mapping = {}
     class_id = 0
     for suit in suits:
