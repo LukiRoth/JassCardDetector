@@ -1,9 +1,11 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torchvision import transforms
+from torchvision import transforms, models
 from PIL import Image
 import cv2
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 def create_card_mapping():
     suits = ['E', 'H', 'S', 'K']
@@ -22,35 +24,7 @@ card_mapping = create_card_mapping()
 print(card_mapping)
 print("Number of classes:", len(card_mapping))
 
-class CNN(nn.Module):
-    def __init__(self):
-        super(CNN, self).__init__()
-
-        self.conv1 = nn.Conv2d(3, 32, kernel_size=3, stride=1, padding=1)
-        self.conv2 = nn.Conv2d(32, 64, kernel_size=3, stride=1, padding=1)
-        self.conv3 = nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1)
-        self.pool = nn.MaxPool2d(kernel_size=2, stride=2, padding=0)
-        self.dropout = nn.Dropout(0.5)
-
-        # After conv1 and pool: 64x64 -> 32x32
-        # After conv2 and pool: 32x32 -> 16x16
-        # After conv3 and pool: 16x16 -> 8x8
-        self.fc1 = nn.Linear(128 * 8 * 8, 512)
-        self.fc2 = nn.Linear(512, 128)
-        self.fc3 = nn.Linear(128, len(card_mapping))
-
-    def forward(self, x):
-        x = self.pool(F.relu(self.conv1(x)))
-        x = self.pool(F.relu(self.conv2(x)))
-        x = self.pool(F.relu(self.conv3(x)))
-        x = torch.flatten(x, 1)
-        x = F.relu(self.fc1(x))
-        x = self.dropout(x)  # Apply dropout
-        x = F.relu(self.fc2(x))
-        x = self.fc3(x)
-        return x
-    
-def preprocess(frame, input_size=(64, 64)):
+def preprocess(frame, input_size=(224, 224)):
     # Define the transformation steps
     transform = transforms.Compose([
         transforms.Resize(input_size),       # Resize to the input size expected by the model
@@ -99,10 +73,28 @@ def display(frame, card_info, class_mapping):
 
     return frame
 
+class ResNet34(nn.Module):
+    def __init__(self, num_classes):
+        super(ResNet34, self).__init__()
+        #self.resnet = models.resnet34(pretrained=True)
+        # Update the model initialization with the new 'weights' parameter
+        self.resnet = models.resnet34(weights=models.ResNet34_Weights.IMAGENET1K_V1)
 
-# Assuming `CNN` is your model class
-model = CNN()
-model = torch.load('Models\TrainedModels\jass_card_classifier_model_20.pth',map_location=torch.device('cpu'))
+        # Replace the last fully connected layer
+        # ResNet34 uses 512 for fc layers
+        self.resnet.fc = nn.Linear(512, num_classes)
+
+    def forward(self, x):
+        return self.resnet(x)
+
+num_classes = len(card_mapping)  # Assuming 'card_mapping' is your class mapping
+
+# After initializing your model
+model = ResNet34(num_classes).to(device)
+
+# Assuming `CNN` is your model class#
+#model = CNN()
+model = torch.load('Models\TrainedModels\jass_card_classifier_model_20_2.pth',map_location=torch.device('cpu'))
 model.eval()
 
 cap = cv2.VideoCapture(1)  # '0' is typically the default camera

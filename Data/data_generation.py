@@ -3,14 +3,24 @@ import glob
 import random
 import numpy as np
 import re
+import cv2
 from PIL import Image, ImageEnhance, ImageOps, ImageFilter
+
+def crop_center_square(image):
+    width, height = image.size
+    new_side = min(width, height)
+    left = (width - new_side) // 2
+    top = (height - new_side) // 2
+    right = (width + new_side) // 2
+    bottom = (height + new_side) // 2
+    return image.crop((left, top, right, bottom))
 
 def random_rotation(image):
     return image.rotate(random.randint(-180, 180))  # Rotates by up to ±30 degrees
 
-def random_brightness(image):
+def random_brightness(image,low=0.5,high=1.8):
     enhancer = ImageEnhance.Brightness(image)
-    return enhancer.enhance(random.uniform(0.5, 1.8))  # Adjust brightness
+    return enhancer.enhance(random.uniform(low, high))  # Adjust brightness
 
 def random_crop(image):
     width, height = image.size
@@ -19,9 +29,9 @@ def random_crop(image):
     top = random.randint(0, height - new_height)
     return image.crop((left, top, left + new_width, top + new_height))
 
-def add_random_noise(image):
+def add_random_noise(image,low=0,high=100):
     np_image = np.array(image)
-    noise = np.random.normal(0, 75, np_image.shape)  # Gaussian noise
+    noise = np.random.normal(low, high, np_image.shape)  # Gaussian noise
     np_image = np.clip(np_image + noise, 0, 255).astype(np.uint8)
     return Image.fromarray(np_image)
 
@@ -66,10 +76,11 @@ def get_last_file_number(base_name, dest_folder):
 
 def process_images(folder, dest_folder, num_images_to_generate=1):
     for file_path in glob.glob(os.path.join(folder, '*.jpg')):
+        # Crop the largest square from the center before applying other transformations
         original_image = Image.open(file_path)
+        original_image = crop_center_square(original_image)
+        
         base_name = os.path.splitext(os.path.basename(file_path))[0]
-
-        # Start numbering from the last file number for this base image
         file_num = get_last_file_number(base_name, dest_folder) + 1
 
         # List of all possible transformations
@@ -94,10 +105,13 @@ def process_images(folder, dest_folder, num_images_to_generate=1):
             # Apply transformations randomly
             for trans_name, trans_func in random.sample(transformation_items, random.randint(1, len(transformation_items))):
                 transformed_image = trans_func(transformed_image)
-
+                
+            # Apply noise and brightness last
+            noise_image = add_random_noise(transformed_image,60,150)
+            final_image = random_brightness(noise_image,3,5)
             # Save the transformed image with file number in the name
             output_file_name = f"{base_name}_{file_num}.jpg"
-            transformed_image.save(os.path.join(dest_folder, output_file_name))
+            final_image.save(os.path.join(dest_folder, output_file_name))
 
             file_num += 1  # Increment the file number for the next image
 
@@ -112,7 +126,7 @@ if not os.path.exists(dest_folder):
     os.makedirs(dest_folder)
 
 # Process the images
-num_generated_images_per_original = 300 
+num_generated_images_per_original = 100
 process_images(source_folder, dest_folder, num_generated_images_per_original)
 
 print("Image processing completed.")
