@@ -151,7 +151,7 @@ optimizer = optim.Adam(model.parameters(), lr=0.001)
 
 # ----------------------------------------------------------------------------------------------------------------
 
-num_epochs = 20
+num_epochs = 35
 training_losses = []
 validation_losses = []
 accuracies = []
@@ -217,9 +217,9 @@ try:
 
         print(f"\033[KEpoch {epoch+1}, Training Loss: {avg_train_loss:.3f}, Validation Loss: {avg_valid_loss:.3f}, Accuracy: {epoch_accuracy:.2f}%, Time: {minutes}m {seconds}s")
 
-        # Save the entire model
-        torch.save(model, 'jass_card_classifier_model.pth')
-        print("Model saved.")
+    # Save the entire model
+    torch.save(model, 'jass_card_classifier_model.pth')
+    print("Model saved.")
 
 except KeyboardInterrupt:
     print("Interrupted. Saving the current model...")

@@ -1,0 +1,45 @@
+Using device: cuda
+CUDA Available: True
+CUDA Version: 12.1
+Current Device: 0
+Device Name: NVIDIA GeForce GTX 980
+Current Working Directory: D:\Studium\Maschinelles_sehen_und_Bildverarbeitung\JassCardDetector
+Dataset already exists. Skipping download.
+Absolute dataset path: d:\Studium\Maschinelles_sehen_und_Bildverarbeitung\JassCardDetector\Data\Processed\database
+Total number of images found: 10800
+Epoch 1, Training Loss: 0.733, Validation Loss: 1.027, Accuracy: 69.72%, Time: 4m 48s
+Epoch 2, Training Loss: 0.540, Validation Loss: 0.411, Accuracy: 85.19%, Time: 4m 46s
+Epoch 3, Training Loss: 0.469, Validation Loss: 0.386, Accuracy: 85.93%, Time: 4m 43s
+Epoch 4, Training Loss: 0.236, Validation Loss: 0.393, Accuracy: 85.79%, Time: 4m 42s
+Epoch 5, Training Loss: 0.489, Validation Loss: 0.372, Accuracy: 87.08%, Time: 4m 44s
+Epoch 6, Training Loss: 0.661, Validation Loss: 0.453, Accuracy: 84.54%, Time: 4m 44s
+Epoch 7, Training Loss: 0.268, Validation Loss: 0.340, Accuracy: 87.59%, Time: 4m 46s
+Epoch 8, Training Loss: 0.511, Validation Loss: 0.345, Accuracy: 88.52%, Time: 4m 41s
+Epoch 9, Training Loss: 0.324, Validation Loss: 0.389, Accuracy: 87.50%, Time: 4m 46s
+Epoch 10, Training Loss: 0.617, Validation Loss: 0.351, Accuracy: 88.75%, Time: 4m 45s
+Epoch 11, Training Loss: 0.432, Validation Loss: 0.298, Accuracy: 90.00%, Time: 4m 48s
+Epoch 12, Training Loss: 0.365, Validation Loss: 0.277, Accuracy: 90.32%, Time: 4m 46s
+Epoch 13, Training Loss: 0.689, Validation Loss: 0.312, Accuracy: 89.63%, Time: 4m 47s
+Epoch 14, Training Loss: 0.575, Validation Loss: 0.486, Accuracy: 86.20%, Time: 4m 47s
+Epoch 15, Training Loss: 0.525, Validation Loss: 0.312, Accuracy: 90.69%, Time: 4m 45s
+Epoch 16, Training Loss: 0.472, Validation Loss: 0.297, Accuracy: 90.14%, Time: 4m 45s
+Epoch 17, Training Loss: 0.715, Validation Loss: 0.328, Accuracy: 91.44%, Time: 4m 46s
+Epoch 18, Training Loss: 0.600, Validation Loss: 0.363, Accuracy: 90.51%, Time: 4m 47s
+Epoch 19, Training Loss: 0.611, Validation Loss: 0.284, Accuracy: 91.20%, Time: 4m 48s
+Epoch 20, Training Loss: 1.352, Validation Loss: 0.400, Accuracy: 89.58%, Time: 4m 53s
+Epoch 21, Training Loss: 0.937, Validation Loss: 0.403, Accuracy: 89.72%, Time: 4m 44s
+Epoch 22, Training Loss: 0.366, Validation Loss: 0.383, Accuracy: 88.70%, Time: 4m 44s
+Epoch 23, Training Loss: 1.102, Validation Loss: 0.411, Accuracy: 90.56%, Time: 4m 47s
+Epoch 24, Training Loss: 1.110, Validation Loss: 0.443, Accuracy: 89.77%, Time: 4m 44s
+Epoch 25, Training Loss: 0.561, Validation Loss: 0.345, Accuracy: 91.02%, Time: 4m 45s
+Epoch 26, Training Loss: 1.529, Validation Loss: 0.523, Accuracy: 88.61%, Time: 4m 45s
+Epoch 27, Training Loss: 1.178, Validation Loss: 0.404, Accuracy: 90.83%, Time: 4m 45s
+Epoch 28, Training Loss: 0.308, Validation Loss: 0.372, Accuracy: 90.19%, Time: 4m 44s
+Epoch 29, Training Loss: 1.041, Validation Loss: 0.402, Accuracy: 90.93%, Time: 4m 43s
+Epoch 30, Training Loss: 0.440, Validation Loss: 0.341, Accuracy: 91.11%, Time: 4m 46s
+Epoch 31, Training Loss: 0.797, Validation Loss: 0.413, Accuracy: 91.53%, Time: 4m 47s
+Epoch 32, Training Loss: 1.045, Validation Loss: 0.521, Accuracy: 89.26%, Time: 4m 47s
+Epoch 33, Training Loss: 0.489, Validation Loss: 0.391, Accuracy: 90.97%, Time: 4m 46s
+Epoch 34, Training Loss: 1.071, Validation Loss: 0.450, Accuracy: 90.05%, Time: 4m 45s
+Epoch 35, Training Loss: 0.105, Validation Loss: 0.433, Accuracy: 89.68%, Time: 4m 46s
+Model saved.
