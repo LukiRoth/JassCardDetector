@@ -1,0 +1,21 @@
+Using device: cuda
+CUDA Available: True
+CUDA Version: 12.1
+Current Device: 0
+Device Name: NVIDIA GeForce GTX 980
+Current Working Directory: D:\Studium\Maschinelles_sehen_und_Bildverarbeitung\JassCardDetector
+Absolute dataset path: d:\Studium\Maschinelles_sehen_und_Bildverarbeitung\JassCardDetector\Data\Processed\database
+Downloading dataset...
+Absolute dataset path: d:\Studium\Maschinelles_sehen_und_Bildverarbeitung\JassCardDetector\Data\Processed\database
+Total number of images found: 14508
+Epoch 1, Training Loss: 0.954, Validation Loss: 0.717, Accuracy: 75.87%, Time: 7m 54s
+Epoch 2, Training Loss: 0.476, Validation Loss: 0.447, Accuracy: 84.32%, Time: 7m 37s
+Epoch 3, Training Loss: 0.510, Validation Loss: 0.485, Accuracy: 82.49%, Time: 7m 36s
+Epoch 4, Training Loss: 0.278, Validation Loss: 0.408, Accuracy: 84.56%, Time: 7m 34s
+Epoch 5, Training Loss: 0.543, Validation Loss: 0.373, Accuracy: 87.21%, Time: 7m 42s
+Epoch 6, Training Loss: 0.290, Validation Loss: 0.320, Accuracy: 88.76%, Time: 7m 34s
+Epoch 7, Training Loss: 0.322, Validation Loss: 0.542, Accuracy: 82.90%, Time: 7m 36s
+Epoch 8, Training Loss: 0.575, Validation Loss: 0.333, Accuracy: 87.28%, Time: 7m 31s
+Epoch 9, Training Loss: 0.232, Validation Loss: 0.357, Accuracy: 87.90%, Time: 7m 35s
+Epoch 10, Training Loss: 0.356, Validation Loss: 0.467, Accuracy: 86.97%, Time: 7m 32s
+Model saved.
