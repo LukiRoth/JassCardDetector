@@ -1,0 +1,38 @@
+<p dir="ltr" style="text-align: left;"><span style="color: rgb(0, 0, 0); font-size: calc(0.974063rem + 0.88875vw);">Jass Card Classification – a deep learning approach</span><br></p>
+
+<p>In the world of digital image processing, the ability to accurately classify visual elements not only enhances user experience but also sets the way for advanced automated systems. Convolutional Neural Networks (CNNs), a class of deep neural networks, have revolutionized this field with their exceptional capability to recognize patterns and classify images with high precision. This project leverages the power of CNNs to tackle the intriguing challenge of Jass card detection and classification.</p>
+<p>The goal of this project is to train a Convolutional Neural Network (CNN) so that it can accurately identify French Jass cards on a plain surface, using Python and PyTorch.</p>
+
+<h4>Work Journal:</h4>
+
+<h5>CW 49:</h5>
+<p>Before diving into the project, we focused on researching existing card recognition projects. We discovered numerous CNN models that could be utilized for card classification. We decided to first try a self-built CNN to observe its effectiveness, and afterwards, adapt a pre-trained network for Jass cards – choosing ResNet34 as a suitable starting point.</p>
+
+<h5>CW 50:</h5>
+<p>Having gathered the foundational information for our classifier, we recognized the need for a sufficiently large database. It quickly became clear that we had to create our own dataset, considering French Jass cards significantly differ from standard poker cards and Jass's limited global popularity.</p>
+<p>From our prior coursework, we understood the importance of having more than just 10 images per card. Therefore, we developed a Python script to automatically generate Jass card images using a default image for each card. This script first removed the background from the original image, then cropped it to a square shape. Subsequently, the image underwent various transformations (rotation, brightness adjustment, noise addition, scaling), randomly chosen to ensure a diverse dataset. Using this method, we produced a dataset of approximately 15,000 images, with about 400 images per card. We then uploaded this database to Kaggle, making it accessible to everyone.</p>
+
+<h5>CW 51:</h5>
+<p>We created our initial CNN with three convolutional layers, followed by max-pooling, dropout, and three fully connected layers. To expedite training, we initially resized the images to 64x64. However, we observed that at this resolution, the card characteristics were mostly not visible, leading to suboptimal validation results. Consequently, we increased the image size to 224x224, which significantly improved the validation accuracy to around 75%.</p>
+
+<h5>CW 52:</h5>
+<p>Unsatisfied with the validation accuracy of our custom CNN, we decided to experiment with ResNet34, a pre-trained network optimized for image recognition, comprising 34 layers. After training ResNet34 with our dataset, we achieved a promising accuracy of around 90%. </p>
+<p>To test the network in real-time, we developed a Python script that utilized the camera of a notebook to feed images to the neural network. The captured images first underwent preprocessing to match the input requirements of the ResNet34 CNN. While the ResNet34 successfully detected the correct Jass card label on a black surface, it struggled with accuracy when the surface color was adjusted. Additionally, this script was limited to detecting only one card at a time, whereas our goal is to enable the identification of multiple cards simultaneously.</p>
+
+<h5>CW 1:</h5>
+<p>After conducting more research on how to classify multiple cards in a single image, we considered using Fast R-CNN, a widely used CNN for object detection, in combination with our trained ResNet34 for classification. However, realizing that training Fast R-CNN would require significant modifications to our dataset and more time, we chose an alternative approach. We applied grayscale conversion and maximized contrast to the image, making the white cards more visible. Then, we used a simple corner detection algorithm from the OpenCV library to detect the edges of the cards. The detected areas were then processed by the ResNet34 to classify the cards. This approach is relatively straightforward and has shown to work well.</p>
+<p>Additionally, we began preparations for our presentation on Monday.</p>
+
+<h5>CW2:</h5>
+<p>Presentation</p>
+
+<h4>State of the Project</h4>
+<p>Our trained ResNet34 algorithm can detect one or more Jass Cards on a surface. However, the applied edge detection technique, which uses grayscale and contrast enhancement, has a significant drawback: overlapping cards cannot be detected. Additionally, objects with high contrast, such as white paper, are mistakenly identified as Jass Cards and processed by the CNN. The card classifier performs best against a dark background; results are less satisfactory with colored backgrounds.</p>
+<p>Future updates for the classifier should surely include the ability to accurately classify cards regardless of the background. Implementing Fast R-CNN for improved detection of cards on the surface, followed by classification with ResNet34, is also a planned enhancement.</p>
+
+<h4>Conclusion</h4>
+<p>In this project, we focused on the potential of Convolutional Neural Networks (CNNs) to specifically identify French Jass cards. Starting with the creation of a unique dataset to address the absence of suitable existing data, we experimented with both custom and pre-trained CNN models, notably ResNet34. Our efforts yielded a significant improvement in classification accuracy, especially with the adaptation of image preprocessing techniques and the use of advanced algorithms like corner detection from OpenCV. Despite facing challenges like the inability to detect overlapping cards and sensitivity to background variations, our project demonstrates the effectiveness and adaptability of CNNs in specialized image recognition tasks. Looking forward, we aim to refine our approach by integrating Fast R-CNN for better object detection and further optimizing the classifier to perform reliably across various backgrounds. This project not only highlights the potential of deep learning in practical applications but also sets the stage for future enhancements and broader applicability in the field of digital image processing.</p>
+
+<h4>Repositories</h4>
+<p><strong>GitHub:</strong> <a href="https://github.com/GameOfZed/JassCardDetector">https://github.com/GameOfZed/JassCardDetector</a></p>
+<p><strong>Kaggle:</strong> <a href="https://www.kaggle.com/datasets/pbegert/swiss-jass-cards">https://www.kaggle.com/datasets/pbegert/swiss-jass-cards</a></p>
