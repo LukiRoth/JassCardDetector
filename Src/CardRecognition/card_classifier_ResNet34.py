@@ -151,7 +151,7 @@ optimizer = optim.Adam(model.parameters(), lr=0.001)
 
 # ----------------------------------------------------------------------------------------------------------------
 
-num_epochs = 10
+num_epochs = 50
 training_losses = []
 validation_losses = []
 accuracies = []
