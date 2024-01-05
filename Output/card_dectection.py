@@ -94,7 +94,7 @@ model = ResNet34(num_classes).to(device)
 
 # Assuming `CNN` is your model class#
 #model = CNN()
-model = torch.load('Models\TrainedModels\jass_card_classifier_model_v1.pth',map_location=torch.device('cpu'))
+model = torch.load('Models\TrainedModels\jass_card_classifier_model_v3.pth',map_location=torch.device('cpu'))
 model.eval()
 
 cap = cv2.VideoCapture(1)  # '0' is typically the default camera

@@ -12,7 +12,7 @@ MIN_HEIGHT = 70  # minimum height of the contour to be considered a card
 card_mapping = create_card_mapping()
 
 # Load your trained ResNet34 model
-model = torch.load('Models\TrainedModels\jass_card_classifier_model_35.pth',map_location=torch.device('cpu'))
+model = torch.load('Models\TrainedModels\jass_card_classifier_model_v3.pth',map_location=torch.device('cpu'))
 model.eval()
 
 # Define the transformation needed for the ResNet34 input
