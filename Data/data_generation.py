@@ -16,11 +16,11 @@ def crop_center_square(image):
     return image.crop((left, top, right, bottom))
 
 def random_rotation(image):
-    return image.rotate(random.randint(-180, 180))  # Rotates by up to ±30 degrees
+    return image.rotate(random.randint(-180, 180))
 
 def random_brightness(image,low=0.5,high=1.8):
     enhancer = ImageEnhance.Brightness(image)
-    return enhancer.enhance(random.uniform(low, high))  # Adjust brightness
+    return enhancer.enhance(random.uniform(low, high))
 
 def random_crop(image):
     width, height = image.size
@@ -36,12 +36,9 @@ def add_random_noise(image,low=0,high=100):
     return Image.fromarray(np_image)
 
 def random_scaling(image):
-    factor = random.uniform(0.9, 1.1)  # Scale between 90% and 110%
+    factor = random.uniform(0.2, 1.8)  # Scale between 90% and 110%
     width, height = image.size
     return image.resize((int(width * factor), int(height * factor)))
-
-def slight_rotation(image):
-    return image.rotate(random.uniform(-5, 5))  # Rotate by up to ±5 degrees
 
 def color_jitter(image):
     color_transforms = [
@@ -86,14 +83,13 @@ def process_images(folder, dest_folder, num_images_to_generate=1):
         # List of all possible transformations
         all_transformations = {
             'rotate': random_rotation,
-            'brightness': random_brightness,
+            #'brightness': random_brightness,
             'crop': random_crop,
-            'noise': add_random_noise,
+            #'noise': add_random_noise,
             'scaling': random_scaling,
-            'slight_rotation': slight_rotation,
-            'color_jitter': color_jitter,
-            'blur': random_blur,
-            'shear': random_shear
+            #'color_jitter': color_jitter,
+            #'blur': random_blur
+            #'shear': random_shear
         }
 
         # Convert dictionary items to a list
@@ -107,11 +103,11 @@ def process_images(folder, dest_folder, num_images_to_generate=1):
                 transformed_image = trans_func(transformed_image)
                 
             # Apply noise and brightness last
-            noise_image = add_random_noise(transformed_image,60,150)
-            final_image = random_brightness(noise_image,3,5)
+            #noise_image = add_random_noise(transformed_image,60,150)
+            #final_image = random_brightness(noise_image,3,5)
             # Save the transformed image with file number in the name
             output_file_name = f"{base_name}_{file_num}.jpg"
-            final_image.save(os.path.join(dest_folder, output_file_name))
+            transformed_image.save(os.path.join(dest_folder, output_file_name))
 
             file_num += 1  # Increment the file number for the next image
 
@@ -126,7 +122,7 @@ if not os.path.exists(dest_folder):
     os.makedirs(dest_folder)
 
 # Process the images
-num_generated_images_per_original = 100
+num_generated_images_per_original = 1
 process_images(source_folder, dest_folder, num_generated_images_per_original)
 
 print("Image processing completed.")
