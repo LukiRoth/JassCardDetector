@@ -3,7 +3,7 @@ from torchvision import transforms
 import cv2
 from PIL import Image
 
-def create_card_mapping():
+def create_card_mapping_files():
     suits = ['E', 'H', 'S', 'K']
     values = ['0', '1', '2', '3', '4', '5', '6', '7', '8']
     mapping = {}
@@ -13,6 +13,18 @@ def create_card_mapping():
             mapping[class_id] = f'{suit}_{value}'
             class_id += 1
     return mapping
+
+def create_card_mapping():
+    suits = ['E', 'H', 'S', 'K']
+    values = ['A', 'K', 'D', 'B', '10', '9', '8', '7', '6']
+    mapping = {}
+    class_id = 0
+    for suit in suits:
+        for value in values:
+            mapping[class_id] = f'{suit}_{value}'
+            class_id += 1
+    return mapping
+
 
 card_mapping = create_card_mapping()
 

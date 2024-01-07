@@ -15,6 +15,24 @@ def crop_center_square(image):
     bottom = (height + new_side) // 2
     return image.crop((left, top, right, bottom))
 
+def make_square(image):
+    width, height = image.size
+
+    # Determine the new size for the shortest dimension
+    new_size = max(width, height)
+
+    # Create a new square image with a white background
+    new_image = Image.new('RGB', (new_size, new_size), (255, 255, 255))
+
+    # Calculate the position to paste the original image onto the new square background
+    paste_x = (new_size - width) // 2
+    paste_y = (new_size - height) // 2
+
+    # Paste the original image onto the new square background
+    new_image.paste(image, (paste_x, paste_y))
+
+    return new_image
+
 def random_rotation(image):
     return image.rotate(random.randint(-180, 180))
 
@@ -59,6 +77,23 @@ def random_shear(image):
     shear_factor = random.uniform(-2, 2)
     return image.transform(image.size, Image.AFFINE, (1, shear_factor, 0, 0, 1, 0))
 
+def random_squeeze(image):
+    # Randomly choose to squeeze horizontally or vertically
+    squeeze_horizontal = random.choice([True, False])
+    factor = random.uniform(0.5, 1.5)  # Scale factor between 0.5 and 1.5
+
+    width, height = image.size
+    if squeeze_horizontal:
+        # Squeeze horizontally
+        new_width = int(width * factor)
+        new_height = height
+    else:
+        # Squeeze vertically
+        new_width = width
+        new_height = int(height * factor)
+
+    return image.resize((new_width, new_height), Image.Resampling.LANCZOS)
+
 
 def get_last_file_number(base_name, dest_folder):
     pattern = re.compile(rf"{re.escape(base_name)}_(\d+).jpg")
@@ -75,7 +110,6 @@ def process_images(folder, dest_folder, num_images_to_generate=1):
     for file_path in glob.glob(os.path.join(folder, '*.jpg')):
         # Crop the largest square from the center before applying other transformations
         original_image = Image.open(file_path)
-        original_image = crop_center_square(original_image)
         
         base_name = os.path.splitext(os.path.basename(file_path))[0]
         file_num = get_last_file_number(base_name, dest_folder) + 1
@@ -83,10 +117,11 @@ def process_images(folder, dest_folder, num_images_to_generate=1):
         # List of all possible transformations
         all_transformations = {
             'rotate': random_rotation,
-            #'brightness': random_brightness,
-            'crop': random_crop,
-            #'noise': add_random_noise,
-            'scaling': random_scaling,
+            'brightness': random_brightness,
+            #'crop': random_crop,
+            'noise': add_random_noise,
+            #'scaling': random_scaling,
+            'squeeze': random_squeeze,
             #'color_jitter': color_jitter,
             #'blur': random_blur
             #'shear': random_shear
@@ -106,6 +141,9 @@ def process_images(folder, dest_folder, num_images_to_generate=1):
             #noise_image = add_random_noise(transformed_image,60,150)
             #final_image = random_brightness(noise_image,3,5)
             # Save the transformed image with file number in the name
+
+            transformed_image = crop_center_square(transformed_image)    
+
             output_file_name = f"{base_name}_{file_num}.jpg"
             transformed_image.save(os.path.join(dest_folder, output_file_name))
 
@@ -122,7 +160,7 @@ if not os.path.exists(dest_folder):
     os.makedirs(dest_folder)
 
 # Process the images
-num_generated_images_per_original = 1
+num_generated_images_per_original = 349
 process_images(source_folder, dest_folder, num_generated_images_per_original)
 
 print("Image processing completed.")

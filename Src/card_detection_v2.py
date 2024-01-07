@@ -10,10 +10,28 @@ import matplotlib.pyplot as plt
 MIN_WIDTH = 50  # minimum width of the contour to be considered a card
 MIN_HEIGHT = 70  # minimum height of the contour to be considered a card
 
+def make_square(image):
+    width, height = image.size
+
+    # Determine the new size for the shortest dimension
+    new_size = max(width, height)
+
+    # Create a new square image with a black background
+    new_image = Image.new('RGB', (new_size, new_size), (0, 0, 0))
+
+    # Calculate the position to paste the original image onto the new square background
+    paste_x = (new_size - width) // 2
+    paste_y = (new_size - height) // 2
+
+    # Paste the original image onto the new square background
+    new_image.paste(image, (paste_x, paste_y))
+
+    return new_image
+
 card_mapping = create_card_mapping()
 
 # Load your trained ResNet34 model
-model = torch.load('Models\TrainedModels\jass_card_classifier_model_35.pth',map_location=torch.device('cpu'))
+model = torch.load('Models\TrainedModels\jass_card_classifier_model_v1.pth',map_location=torch.device('cpu'))
 model.eval()
 
 # Define the transformation needed for the ResNet34 input
@@ -37,6 +55,18 @@ while True:
     _, thresh = cv2.threshold(gray, 127, 255, cv2.THRESH_BINARY)
     contours, _ = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
+    """
+    # Plot using Matplotlib
+    plt.imshow(gray, cmap='gray')
+    plt.title("Grayscale Image")
+    plt.show()
+
+    # Plot using Matplotlib
+    plt.imshow(thresh, cmap='gray')
+    plt.title("Grayscale Image Contrast")
+    plt.show()
+    """
+
     # Process each contour
     for contour in contours:
         # Approximate contour to polygon
@@ -54,9 +84,10 @@ while True:
                 # Ensure that the ROI is converted to RGB if your camera captures in BGR
                 roi = cv2.cvtColor(roi, cv2.COLOR_BGR2RGB)
                 roi_pil = Image.fromarray(roi)
+                roi_pil = make_square(roi_pil)
                 roi_tensor = transform(roi_pil).unsqueeze(0)
 
-
+                
                 # Unnormalize the tensor
                 mean = np.array([0.485, 0.456, 0.406])
                 std = np.array([0.229, 0.224, 0.225])
@@ -71,7 +102,7 @@ while True:
                 plt.imshow(roi_unnorm)
                 plt.title("ROI Tensor Visualized")
                 plt.show()
-
+                
                 # Make a prediction
                 with torch.no_grad():
                     prediction = model(roi_tensor)
@@ -91,6 +122,6 @@ while True:
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
-# When everything is done, release the capture
+# Release the capture
 cap.release()
 cv2.destroyAllWindows()
