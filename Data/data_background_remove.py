@@ -1,10 +1,23 @@
-"""
-This script processes a set of card images from specified source folders, 
-removes their backgrounds, and saves the processed images into a destination folder.
-It uses the rembg library to remove backgrounds and PIL for image handling.
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 
-Each card type (Ecke, Herz, Kreuz, Schaufel) is processed separately, and the output
-is saved with a new filename that includes the card type and a sequence number.
+"""
+File name: card_image_background_remover.py
+Author: begep1 & rothl18
+Date created: 02.12.2023
+Date last modified: 08.01.2023
+Python Version: 3.11.6
+
+Description:
+This script processes playing card images, removing backgrounds using 'rembg' and saving them 
+in a specified folder. It supports different card types (Ecke, Herz, Kreuz, Schaufel), each 
+processed in separate subfolders. The script is ideal for preparing card images for machine 
+learning tasks or other image processing applications.
+
+Usage:
+Set the source ('Data/Raw/original/{Card Suit}') and destination ('Data/Processed/no_background') 
+folder paths. The script handles JPEG image processing, background removal, and saving the 
+output in an organized format.
 """
 
 import os

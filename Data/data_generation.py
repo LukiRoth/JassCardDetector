@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
 """
 File name: image_transformation_processor.py
 Author: begep1 & rothl18

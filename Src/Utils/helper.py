@@ -2,6 +2,8 @@ import torch
 from torchvision import transforms
 import cv2
 from PIL import Image
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 def create_card_mapping_files():
     suits = ['E', 'H', 'S', 'K']
@@ -13,6 +15,7 @@ def create_card_mapping_files():
             mapping[class_id] = f'{suit}_{value}'
             class_id += 1
     return mapping
+
 
 def create_card_mapping():
     suits = ['E', 'H', 'S', 'K']
@@ -76,3 +79,4 @@ def display(frame, card_info, class_mapping):
         cv2.putText(frame, text, (10, 25 * (i + 1)), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
 
     return frame
+
