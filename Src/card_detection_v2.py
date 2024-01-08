@@ -42,7 +42,7 @@ transform = transforms.Compose([
 ])
 
 # Initialize video capture
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(1)
 
 while True:
     # Capture frame-by-frame
