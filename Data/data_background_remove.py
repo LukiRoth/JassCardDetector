@@ -1,3 +1,12 @@
+"""
+This script processes a set of card images from specified source folders, 
+removes their backgrounds, and saves the processed images into a destination folder.
+It uses the rembg library to remove backgrounds and PIL for image handling.
+
+Each card type (Ecke, Herz, Kreuz, Schaufel) is processed separately, and the output
+is saved with a new filename that includes the card type and a sequence number.
+"""
+
 import os
 import glob
 from rembg import remove

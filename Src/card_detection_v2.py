@@ -42,7 +42,7 @@ transform = transforms.Compose([
 ])
 
 # Initialize video capture
-cap = cv2.VideoCapture(1)
+cap = cv2.VideoCapture(0)
 
 while True:
     # Capture frame-by-frame
@@ -88,20 +88,20 @@ while True:
                 roi_tensor = transform(roi_pil).unsqueeze(0)
 
                 
-                # Unnormalize the tensor
-                mean = np.array([0.485, 0.456, 0.406])
-                std = np.array([0.229, 0.224, 0.225])
-                roi_unnorm = torch.squeeze(roi_tensor)  # Remove batch dimension
-                roi_unnorm = roi_unnorm * torch.tensor(std[:, None, None]) + torch.tensor(mean[:, None, None])
-                roi_unnorm = roi_unnorm.numpy()
+                # # Unnormalize the tensor
+                # mean = np.array([0.485, 0.456, 0.406])
+                # std = np.array([0.229, 0.224, 0.225])
+                # roi_unnorm = torch.squeeze(roi_tensor)  # Remove batch dimension
+                # roi_unnorm = roi_unnorm * torch.tensor(std[:, None, None]) + torch.tensor(mean[:, None, None])
+                # roi_unnorm = roi_unnorm.numpy()
 
-                # Transpose from (C, H, W) to (H, W, C)
-                roi_unnorm = np.transpose(roi_unnorm, (1, 2, 0))
+                # # Transpose from (C, H, W) to (H, W, C)
+                # roi_unnorm = np.transpose(roi_unnorm, (1, 2, 0))
 
-                # Plot using Matplotlib
-                plt.imshow(roi_unnorm)
-                plt.title("ROI Tensor Visualized")
-                plt.show()
+                # # Plot using Matplotlib
+                # plt.imshow(roi_unnorm)
+                # plt.title("ROI Tensor Visualized")
+                # plt.show()
                 
                 # Make a prediction
                 with torch.no_grad():
