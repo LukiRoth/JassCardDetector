@@ -31,7 +31,7 @@ def make_square(image):
 card_mapping = create_card_mapping()
 
 # Load your trained ResNet34 model
-model = torch.load('Models\TrainedModels\jass_card_classifier_model_v1.pth',map_location=torch.device('cpu'))
+model = torch.load('Models\TrainedModels\jass_card_classifier_model_v4.pth',map_location=torch.device('cpu'))
 model.eval()
 
 # Define the transformation needed for the ResNet34 input

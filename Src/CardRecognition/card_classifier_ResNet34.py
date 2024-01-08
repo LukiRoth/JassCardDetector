@@ -17,12 +17,6 @@ import pandas as pd
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print("Using device:", device)
 
-print("CUDA Available:", torch.cuda.is_available())
-print("CUDA Version:", torch.version.cuda)
-print("Current Device:", torch.cuda.current_device())
-print("Device Name:", torch.cuda.get_device_name(torch.cuda.current_device()))
-
-
 # Print the current working directory
 print("Current Working Directory:", os.getcwd())
 # Change the current working directory to the script's directory (if needed)
@@ -43,7 +37,8 @@ def download_dataset(dataset_path, kaggle_path):
 
 # Download Jass Card Dataset
 dataset_path = '../../Data/Processed/database'
-kaggle_path = 'pbegert/swiss-jass-cards'
+#kaggle_path = 'pbegert/swiss-jass-cards'
+kaggle_path = 'pbegert/french-jass-cards'
 download_dataset(dataset_path, kaggle_path)
 
 absolute_dataset_path = os.path.abspath(dataset_path)
@@ -122,8 +117,8 @@ train_size = len(jass_dataset) - validation_size
 train_dataset, validation_dataset = random_split(jass_dataset, [train_size, validation_size])
 
 # Create DataLoaders for both training and validation sets
-train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
-validation_loader = DataLoader(validation_dataset, batch_size=32, shuffle=False)
+train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
+validation_loader = DataLoader(validation_dataset, batch_size=64, shuffle=False)
 
 # ----------------------------------------------------------------------------------------------------------------
 
@@ -141,7 +136,7 @@ class ResNet34(nn.Module):
     def forward(self, x):
         return self.resnet(x)
 
-num_classes = len(card_mapping)  # Assuming 'card_mapping' is your class mapping
+num_classes = len(card_mapping)
 
 # After initializing your model
 model = ResNet34(num_classes).to(device)
@@ -151,7 +146,7 @@ optimizer = optim.Adam(model.parameters(), lr=0.001)
 
 # ----------------------------------------------------------------------------------------------------------------
 
-num_epochs = 50
+num_epochs = 70
 training_losses = []
 validation_losses = []
 accuracies = []
