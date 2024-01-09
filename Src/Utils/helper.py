@@ -80,3 +80,62 @@ def display(frame, card_info, class_mapping):
 
     return frame
 
+def plot_confusion_matrix(all_targets_np, all_predictions_np, card_mapping):
+    """
+    Plot the confusion matrix for model predictions.
+    
+    Args:
+        all_targets_np: Numpy array of target values.
+        all_predictions_np: Numpy array of predicted values.
+        card_mapping: Dictionary mapping card names to their numerical labels.
+    """
+    cm = confusion_matrix(all_targets_np, all_predictions_np)
+    df_cm = pd.DataFrame(cm, index=[i for i in card_mapping.keys()], columns=[i for i in card_mapping.keys()])
+    
+    plt.figure(figsize=(10, 7))
+    sns.heatmap(df_cm, annot=True, cmap='Blues', fmt='g')
+    plt.title('Confusion Matrix')
+    plt.xlabel('Predicted Label')
+    plt.ylabel('True Label')
+    plt.show()
+
+def plot_training_statistics(epochs, training_losses, validation_losses, accuracies):
+    """
+    Plot the training loss, validation loss, and accuracy over epochs.
+    
+    Args:
+        epochs: Range of epochs.
+        training_losses: List of training losses per epoch.
+        validation_losses: List of validation losses per epoch.
+        accuracies: List of accuracies per epoch.
+    """
+    plt.figure(figsize=(10, 3))
+
+    # Plot Training Loss
+    plt.subplot(1, 3, 1)
+    plt.plot(epochs, training_losses, 'r-', label='Training Loss')
+    plt.title('Training Loss')
+    plt.xlabel('Epoch')
+    plt.ylabel('Loss')
+    plt.legend()
+
+    # Plot Validation Loss
+    plt.subplot(1, 3, 2)
+    plt.plot(epochs, validation_losses, 'b-', label='Validation Loss')
+    plt.title('Validation Loss')
+    plt.xlabel('Epoch')
+    plt.ylabel('Loss')
+    plt.legend()
+
+    # Plot Accuracy
+    plt.subplot(1, 3, 3)
+    plt.plot(epochs, accuracies, 'g-', label='Accuracy')
+    plt.title('Accuracy')
+    plt.xlabel('Epoch')
+    plt.ylabel('Accuracy (%)')
+    plt.legend()
+
+    plt.tight_layout()
+    plt.show()
+
+

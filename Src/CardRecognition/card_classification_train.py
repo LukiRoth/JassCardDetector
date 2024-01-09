@@ -1,19 +1,48 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+"""
+File name: card_classification_train.py
+Author: begep1 & rothl18
+Date created: 05.12.2023
+Date last modified: 08.01.2023
+Python Version: 3.11.6
+
+Description:
+This script is developed for training a neural network model, specifically a ResNet34, 
+to classify Jass playing cards. It includes steps for dataset downloading, preprocessing, model training, 
+and validation. The script utilizes PyTorch for building and training the model. 
+It is designed to work with a custom dataset of Jass card images, handling tasks such as dataset loading, 
+image transformations, model training, and accuracy assessment.
+
+Key Features:
+- Dataset downloading from Kaggle
+- Custom dataset class for image processing
+- Implementation of ResNet34 with PyTorch
+- Training and validation loops with progress tracking
+- Model performance visualization (loss and accuracy)
+
+Usage:
+Set the 'dataset_path' and 'kaggle_path' variables to specify the location of your dataset. 
+Ensure that the required libraries are installed. Run the script to train the model. 
+The script will automatically handle dataset preparation, model training, and performance evaluation.
+"""
+
 import os
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torchvision import datasets, transforms, models
+from torchvision import transforms, models
 from torch.utils.data import Dataset, DataLoader, random_split
-import torch.nn.functional as F
 from PIL import Image
 from sklearn.metrics import accuracy_score, confusion_matrix
 import time
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
-#from Utils.helper import create_card_mapping_files
 
 NUM_EPOCHS = 70
+DATASET_PATH = '../../Data/Processed/database'
 
 def create_card_mapping_files():
     suits = ['E', 'H', 'S', 'K']
@@ -25,6 +54,8 @@ def create_card_mapping_files():
             mapping[class_id] = f'{suit}_{value}'
             class_id += 1
     return mapping
+
+# Custom dataset class
 class JassCardDataset(Dataset):
     def __init__(self, directory, transform=None):
         self.directory = directory
@@ -58,7 +89,7 @@ class JassCardDataset(Dataset):
             print(f"Unmapped label for file: {filename}, Extracted card_id: {card_id}")
 
         return label
-
+    
 class ResNet34(nn.Module):
     def __init__(self, num_classes):
         super(ResNet34, self).__init__()
@@ -73,156 +104,153 @@ class ResNet34(nn.Module):
     def forward(self, x):
         return self.resnet(x)
 
-def train_model(model, train_loader, validation_loader, num_epochs, device):
-    """
-    Trains and validates the model.
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print("Using device:", device)
 
-    Parameters:
-    model (nn.Module): The neural network model to be trained.
-    train_loader (DataLoader): DataLoader for the training set.
-    validation_loader (DataLoader): DataLoader for the validation set.
-    num_epochs (int): Number of epochs to train the model.
-    device (torch.device): Device to train the model on (CPU or GPU).
-    """
-    training_losses = []
-    validation_losses = []
-    accuracies = []
+# Print the current working directory
+print("Current Working Directory:", os.getcwd())
+# Change the current working directory to the script's directory (if needed)
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
-    criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(model.parameters(), lr=0.001)
+card_mapping = create_card_mapping_files()
+num_classes = len(card_mapping)
 
-    for epoch in range(num_epochs):
-        # Training Phase
-        model.train()
-        total_train_loss = 0
-        for inputs, targets in train_loader:
+
+    
+# Define transformations
+transform = transforms.Compose([
+    transforms.Resize((224, 224)),  # Resize to the input size expected by ResNet
+    transforms.ToTensor(),
+    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+])
+
+# Create dataset
+jass_dataset = JassCardDataset(directory=DATASET_PATH, transform=transform)
+# Define the size of the validation set
+
+validation_size = int(0.2 * len(jass_dataset))  # 20% for validation
+train_size = len(jass_dataset) - validation_size
+
+# Split the dataset
+train_dataset, validation_dataset = random_split(jass_dataset, [train_size, validation_size])
+
+# Create DataLoaders for both training and validation sets
+train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
+validation_loader = DataLoader(validation_dataset, batch_size=64, shuffle=False)
+
+# After initializing your model
+model = ResNet34(num_classes).to(device)
+
+criterion = nn.CrossEntropyLoss()
+optimizer = optim.Adam(model.parameters(), lr=0.001)
+
+training_losses = []
+validation_losses = []
+accuracies = []
+
+try:
+    for epoch in range(NUM_EPOCHS):
+        epoch_start_time = time.time()
+        
+        model.train()  # Set the model to training mode
+        total_batches = len(train_loader)
+        # Training loop
+        for i, (inputs, targets) in enumerate(train_loader):
             inputs, targets = inputs.to(device), targets.to(device)
-
             optimizer.zero_grad()
             outputs = model(inputs)
             loss = criterion(outputs, targets)
             loss.backward()
             optimizer.step()
 
-            total_train_loss += loss.item()
+            # Print the progress
+            print(f"Epoch [{epoch+1}/{NUM_EPOCHS}] - Training Progress: {int((i+1)/total_batches*100)}%", end='\r')
 
-        avg_train_loss = total_train_loss / len(train_loader)
-        training_losses.append(avg_train_loss)
-
-        # Validation Phase
+        # Validation loop
         model.eval()
-        total_val_loss = 0
+        valid_loss = 0
         all_targets = []
         all_predictions = []
+        total_val_batches = len(validation_loader)
+
+        # Inside your validation loop
         with torch.no_grad():
-            for inputs, targets in validation_loader:
+            for i, (inputs, targets) in enumerate(validation_loader):
                 inputs, targets = inputs.to(device), targets.to(device)
                 outputs = model(inputs)
                 loss = criterion(outputs, targets)
-                total_val_loss += loss.item()
+                valid_loss += loss.item()
 
                 _, predicted = torch.max(outputs.data, 1)
-                all_targets.extend(targets.cpu().numpy())
-                all_predictions.extend(predicted.cpu().numpy())
+                all_targets.extend(targets.cpu())
+                all_predictions.extend(predicted.cpu())
 
-        avg_val_loss = total_val_loss / len(validation_loader)
-        validation_losses.append(avg_val_loss)
-        accuracy = accuracy_score(all_targets, all_predictions) * 100
-        accuracies.append(accuracy)
+                # Print the validation progress
+                print(f"Epoch [{epoch+1}/{NUM_EPOCHS}] - Validation Progress: {int((i+1)/total_val_batches*100)}%", end='\r')
 
-        print(f"Epoch {epoch+1}/{num_epochs}, Training Loss: {avg_train_loss:.4f}, Validation Loss: {avg_val_loss:.4f}, Accuracy: {accuracy:.2f}%")
+        # Convert to NumPy arrays before calculating accuracy
+        all_targets_np = [t.numpy() for t in all_targets]
+        all_predictions_np = [p.numpy() for p in all_predictions]
+        accuracy = accuracy_score(all_targets_np, all_predictions_np)
 
-    return training_losses, validation_losses, accuracies
+        epoch_end_time = time.time()
+        epoch_duration = epoch_end_time - epoch_start_time
+        minutes = int(epoch_duration // 60)
+        seconds = int(epoch_duration % 60)
 
-def check_data_availability(dataset_path):
-    """
-    Checks if the dataset directory exists and contains at least one image file.
-    
-    Parameters:
-    dataset_path (str): Path to the dataset directory.
-    """
-    if not os.path.exists(dataset_path):
-        raise FileNotFoundError(f"Dataset directory {dataset_path} not found.")
-    
-    image_files = [file for file in os.listdir(dataset_path) if file.endswith(('.png', '.jpg', '.jpeg'))]
-    if len(image_files) == 0:
-        raise FileNotFoundError(f"No image files found in {dataset_path}.")
-    
-def plot_metrics(training_losses, validation_losses, accuracies):
-    """
-    Plots the training loss, validation loss, and accuracy over epochs.
+        # Calculate and store the average training loss, validation loss, and accuracy for the epoch
+        avg_train_loss = loss.item()
+        avg_valid_loss = valid_loss / len(validation_loader)
+        epoch_accuracy = accuracy_score(all_targets_np, all_predictions_np) * 100
 
-    Parameters:
-    training_losses (list): List of training losses per epoch.
-    validation_losses (list): List of validation losses per epoch.
-    accuracies (list): List of accuracies per epoch.
-    """
-    epochs = range(1, len(training_losses) + 1)
+        training_losses.append(avg_train_loss)
+        validation_losses.append(avg_valid_loss)
+        accuracies.append(epoch_accuracy)
 
-    plt.figure(figsize=(15, 5))
+        print(f"\033[KEpoch {epoch+1}, Training Loss: {avg_train_loss:.3f}, Validation Loss: {avg_valid_loss:.3f}, Accuracy: {epoch_accuracy:.2f}%, Time: {minutes}m {seconds}s")
 
-    # Plot Training Loss
-    plt.subplot(1, 3, 1)
-    plt.plot(epochs, training_losses, 'r-', label='Training Loss')
-    plt.title('Training Loss')
-    plt.xlabel('Epoch')
-    plt.ylabel('Loss')
-    plt.legend()
+    # Save the entire model
+    torch.save(model, 'jass_card_classifier_model.pth')
+    print("Model saved.")
 
-    # Plot Validation Loss
-    plt.subplot(1, 3, 2)
-    plt.plot(epochs, validation_losses, 'b-', label='Validation Loss')
-    plt.title('Validation Loss')
-    plt.xlabel('Epoch')
-    plt.ylabel('Loss')
-    plt.legend()
+except KeyboardInterrupt:
+    print("Interrupted. Saving the current model...")
+    torch.save(model, f'jass_card_classifier_model_interrupted_epoch_{epoch+1}.pth')
+    print("Model saved. Exiting program.")
 
-    # Plot Accuracy
-    plt.subplot(1, 3, 3)
-    plt.plot(epochs, accuracies, 'g-', label='Accuracy')
-    plt.title('Accuracy')
-    plt.xlabel('Epoch')
-    plt.ylabel('Accuracy (%)')
-    plt.legend()
+#Print confusion matrix
+cm = confusion_matrix(all_targets_np, all_predictions_np)
+df_cm = pd.DataFrame(cm, index = [i for i in card_mapping.keys()], columns = [i for i in card_mapping.keys()])
+plt.figure(figsize = (10,7))
+sns.heatmap(df_cm, annot=True, cmap='Blues', fmt='g')
+plt.show()
 
-    plt.tight_layout()
-    plt.show()
+epochs = range(1, len(training_losses)+1)
 
-def main():
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print("Using device:", device)
+# Plot Training Loss
+plt.figure(figsize=(10, 3))
+plt.subplot(1, 3, 1)
+plt.plot(epochs, training_losses, 'r-', label='Training Loss')
+plt.title('Training Loss')
+plt.xlabel('Epoch')
+plt.ylabel('Loss')
+plt.legend()
 
-    # Set the current working directory
-    os.chdir(os.path.dirname(os.path.abspath(__file__)))
-    print("Current Working Directory:", os.getcwd())
+# Plot Validation Loss
+plt.subplot(1, 3, 2)
+plt.plot(epochs, validation_losses, 'b-', label='Validation Loss')
+plt.title('Validation Loss')
+plt.xlabel('Epoch')
+plt.ylabel('Loss')
+plt.legend()
 
-    # Check if dataset is available
-    dataset_path = '../../Data/Processed/database'
-    check_data_availability(dataset_path)
+# Plot Accuracy
+plt.subplot(1, 3, 3)
+plt.plot(epochs, accuracies, 'g-', label='Accuracy')
+plt.title('Accuracy')
+plt.xlabel('Epoch')
+plt.ylabel('Accuracy (%)')
+plt.legend()
 
-    # Define transformations
-    transform = transforms.Compose([
-        transforms.Resize((224, 224)),
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-    ])
-
-    # Create dataset and DataLoaders
-    jass_dataset = JassCardDataset(directory=dataset_path, transform=transform)
-    validation_size = int(0.2 * len(jass_dataset))
-    train_size = len(jass_dataset) - validation_size
-    train_dataset, validation_dataset = random_split(jass_dataset, [train_size, validation_size])
-    train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
-    validation_loader = DataLoader(validation_dataset, batch_size=64, shuffle=False)
-
-    # Initialize model and start training
-    num_classes = len(jass_dataset.mapping)
-    model = ResNet34(num_classes).to(device)
-
-    training_losses, validation_losses, accuracies = train_model(model, train_loader, validation_loader, NUM_EPOCHS, device)
-
-    # Plot the training metrics
-    plot_metrics(training_losses, validation_losses, accuracies)
-
-if __name__ == "__main__":
-    main()
+plt.tight_layout()
+plt.show()

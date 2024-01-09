@@ -12,7 +12,7 @@ import time
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
-from Utils.helper import *
+#from Utils.helper import *
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -46,7 +46,16 @@ absolute_dataset_path = os.path.abspath(dataset_path)
 print("Absolute dataset path:", absolute_dataset_path)
 
 # ----------------------------------------------------------------------------------------------------------------
-
+def create_card_mapping_files():
+    suits = ['E', 'H', 'S', 'K']
+    values = ['0', '1', '2', '3', '4', '5', '6', '7', '8']
+    mapping = {}
+    class_id = 0
+    for suit in suits:
+        for value in values:
+            mapping[class_id] = f'{suit}_{value}'
+            class_id += 1
+    return mapping
 card_mapping = create_card_mapping_files()
 
 # ----------------------------------------------------------------------------------------------------------------
@@ -57,7 +66,7 @@ class JassCardDataset(Dataset):
         self.directory = directory
         self.transform = transform
         self.images = [img for img in os.listdir(directory) if img.endswith(('.png', '.jpg', '.jpeg'))]  # Filter for image files
-        self.mapping = create_card_mapping()
+        self.mapping = create_card_mapping_files()
         
         # Print the total number of images found
         print("Total number of images found:", len(self.images))
