@@ -1,1 +1,7 @@
 A requirements.txt file for listing all the Python dependencies.
+torch>=1.7.1
+torchvision>=0.8.2
+opencv-python>=4.1.2
+Pillow>=8.0.1
+matplotlib>=3.3.3
+seaborn>=0.11.0

@@ -45,14 +45,40 @@ NUM_EPOCHS = 70
 DATASET_PATH = '../../Data/Processed/database'
 
 def create_card_mapping_files():
+    """
+    Creates a mapping of card names to class IDs.
+
+    This function generates a dictionary where each card, defined by its suit and value,
+    is associated with a unique class ID. This is useful for classification tasks in machine learning,
+    where each card needs to be distinctly identified.
+
+    Returns:
+        dict: A dictionary with keys as card names (in the format 'suit_value') and values as unique class IDs.
+    """
+
+    # Define the suits of the cards.
+    # 'E' stands for Ecke, 'H' for Herz, 'S' for Schaufel, 'K' for Kreuz.
     suits = ['E', 'H', 'S', 'K']
+
+    # Define the values of the cards.
+    # The mapping follows: 0 = Ass, 1 = König, 2 = Dame, 3 = Bauer, 4 = 10, 5 = 9, 6 = 8, 7 = 7, 8 = 6.
     values = ['0', '1', '2', '3', '4', '5', '6', '7', '8']
+
+    # Initialize an empty dictionary to hold the mapping.
     mapping = {}
+
+    # Initialize a class ID starting from 0. This will be used to assign a unique ID to each card.
     class_id = 0
+
+    # Iterate over each combination of suit and value.
     for suit in suits:
         for value in values:
-            mapping[class_id] = f'{suit}_{value}'
+            # Create a composite key in the format 'suit_value' and assign it the current class ID.
+            mapping[f'{suit}_{value}'] = class_id
+            # Increment the class ID for the next card.
             class_id += 1
+
+    # Return the complete mapping dictionary.
     return mapping
 
 # Custom dataset class
@@ -89,11 +115,11 @@ class JassCardDataset(Dataset):
             print(f"Unmapped label for file: {filename}, Extracted card_id: {card_id}")
 
         return label
-    
+
+# ResNet34 class
 class ResNet34(nn.Module):
     def __init__(self, num_classes):
         super(ResNet34, self).__init__()
-        #self.resnet = models.resnet34(pretrained=True)
         # Update the model initialization with the new 'weights' parameter
         self.resnet = models.resnet34(weights=models.ResNet34_Weights.IMAGENET1K_V1)
 
@@ -104,153 +130,132 @@ class ResNet34(nn.Module):
     def forward(self, x):
         return self.resnet(x)
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-print("Using device:", device)
+def main():
+    # Set device to CUDA if available, else CPU
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print("Using device:", device)
 
-# Print the current working directory
-print("Current Working Directory:", os.getcwd())
-# Change the current working directory to the script's directory (if needed)
-os.chdir(os.path.dirname(os.path.abspath(__file__)))
+    # Print the current working directory
+    print("Current Working Directory:", os.getcwd())
+    # Change to the script's directory (if required)
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
-card_mapping = create_card_mapping_files()
-num_classes = len(card_mapping)
+    # Create a mapping of cards, and count the number of classes
+    card_mapping = create_card_mapping_files()
+    num_classes = len(card_mapping)
 
+    # Define image transformations
+    transform = transforms.Compose([
+        transforms.Resize((224, 224)),  # Resize for ResNet input
+        transforms.ToTensor(),  # Convert to tensor
+        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])  # Normalize
+    ])
 
-    
-# Define transformations
-transform = transforms.Compose([
-    transforms.Resize((224, 224)),  # Resize to the input size expected by ResNet
-    transforms.ToTensor(),
-    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-])
+    # Create dataset and split into training and validation sets
+    jass_dataset = JassCardDataset(directory=DATASET_PATH, transform=transform)
+    validation_size = int(0.2 * len(jass_dataset))  # 20% for validation
+    train_size = len(jass_dataset) - validation_size
+    train_dataset, validation_dataset = random_split(jass_dataset, [train_size, validation_size])
 
-# Create dataset
-jass_dataset = JassCardDataset(directory=DATASET_PATH, transform=transform)
-# Define the size of the validation set
+    # Create DataLoaders for training and validation sets
+    train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
+    validation_loader = DataLoader(validation_dataset, batch_size=64, shuffle=False)
 
-validation_size = int(0.2 * len(jass_dataset))  # 20% for validation
-train_size = len(jass_dataset) - validation_size
+    # Initialize the model
+    model = ResNet34(num_classes).to(device)
 
-# Split the dataset
-train_dataset, validation_dataset = random_split(jass_dataset, [train_size, validation_size])
+    # Loss function and optimizer
+    criterion = nn.CrossEntropyLoss()
+    optimizer = optim.Adam(model.parameters(), lr=0.001)
 
-# Create DataLoaders for both training and validation sets
-train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
-validation_loader = DataLoader(validation_dataset, batch_size=64, shuffle=False)
+    # Lists to store loss and accuracy
+    training_losses = []
+    validation_losses = []
+    accuracies = []
 
-# After initializing your model
-model = ResNet34(num_classes).to(device)
-
-criterion = nn.CrossEntropyLoss()
-optimizer = optim.Adam(model.parameters(), lr=0.001)
-
-training_losses = []
-validation_losses = []
-accuracies = []
-
-try:
-    for epoch in range(NUM_EPOCHS):
-        epoch_start_time = time.time()
-        
-        model.train()  # Set the model to training mode
-        total_batches = len(train_loader)
-        # Training loop
-        for i, (inputs, targets) in enumerate(train_loader):
-            inputs, targets = inputs.to(device), targets.to(device)
-            optimizer.zero_grad()
-            outputs = model(inputs)
-            loss = criterion(outputs, targets)
-            loss.backward()
-            optimizer.step()
-
-            # Print the progress
-            print(f"Epoch [{epoch+1}/{NUM_EPOCHS}] - Training Progress: {int((i+1)/total_batches*100)}%", end='\r')
-
-        # Validation loop
-        model.eval()
-        valid_loss = 0
-        all_targets = []
-        all_predictions = []
-        total_val_batches = len(validation_loader)
-
-        # Inside your validation loop
-        with torch.no_grad():
-            for i, (inputs, targets) in enumerate(validation_loader):
+    # Training and validation loop
+    try:
+        for epoch in range(NUM_EPOCHS):
+            epoch_start_time = time.time()
+            # Training phase
+            model.train()  # Set model to training mode
+            for i, (inputs, targets) in enumerate(train_loader):
                 inputs, targets = inputs.to(device), targets.to(device)
+                optimizer.zero_grad()
                 outputs = model(inputs)
                 loss = criterion(outputs, targets)
-                valid_loss += loss.item()
-
-                _, predicted = torch.max(outputs.data, 1)
-                all_targets.extend(targets.cpu())
-                all_predictions.extend(predicted.cpu())
-
-                # Print the validation progress
-                print(f"Epoch [{epoch+1}/{NUM_EPOCHS}] - Validation Progress: {int((i+1)/total_val_batches*100)}%", end='\r')
-
-        # Convert to NumPy arrays before calculating accuracy
-        all_targets_np = [t.numpy() for t in all_targets]
-        all_predictions_np = [p.numpy() for p in all_predictions]
-        accuracy = accuracy_score(all_targets_np, all_predictions_np)
-
-        epoch_end_time = time.time()
-        epoch_duration = epoch_end_time - epoch_start_time
-        minutes = int(epoch_duration // 60)
-        seconds = int(epoch_duration % 60)
-
-        # Calculate and store the average training loss, validation loss, and accuracy for the epoch
-        avg_train_loss = loss.item()
-        avg_valid_loss = valid_loss / len(validation_loader)
-        epoch_accuracy = accuracy_score(all_targets_np, all_predictions_np) * 100
-
-        training_losses.append(avg_train_loss)
-        validation_losses.append(avg_valid_loss)
-        accuracies.append(epoch_accuracy)
-
-        print(f"\033[KEpoch {epoch+1}, Training Loss: {avg_train_loss:.3f}, Validation Loss: {avg_valid_loss:.3f}, Accuracy: {epoch_accuracy:.2f}%, Time: {minutes}m {seconds}s")
-
-    # Save the entire model
+                loss.backward()
+                optimizer.step()
+                print(f"Epoch [{epoch+1}/{NUM_EPOCHS}] - Training Progress: {int((i+1)/len(train_loader)*100)}%", end='\r')
+            # Validation phase
+            model.eval()  # Set model to evaluation mode
+            valid_loss = 0
+            all_targets = []
+            all_predictions = []
+            with torch.no_grad():
+                for i, (inputs, targets) in enumerate(validation_loader):
+                    inputs, targets = inputs.to(device), targets.to(device)
+                    outputs = model(inputs)
+                    loss = criterion(outputs, targets)
+                    valid_loss += loss.item()
+                    _, predicted = torch.max(outputs.data, 1)
+                    all_targets.extend(targets.cpu())
+                    all_predictions.extend(predicted.cpu())
+                    print(f"Epoch [{epoch+1}/{NUM_EPOCHS}] - Validation Progress: {int((i+1)/len(validation_loader)*100)}%", end='\r')
+            # Calculate and store metrics for the epoch
+            avg_train_loss = loss.item()
+            avg_valid_loss = valid_loss / len(validation_loader)
+            epoch_accuracy = accuracy_score([t.numpy() for t in all_targets], [p.numpy() for p in all_predictions]) * 100
+            training_losses.append(avg_train_loss)
+            validation_losses.append(avg_valid_loss)
+            accuracies.append(epoch_accuracy)
+            # Print epoch summary
+            epoch_end_time = time.time()
+            print(f"\033[KEpoch {epoch+1}, Training Loss: {avg_train_loss:.3f}, Validation Loss: {avg_valid_loss:.3f}, Accuracy: {epoch_accuracy:.2f}%, Time: {int((epoch_end_time - epoch_start_time) // 60)}m {int((epoch_end_time - epoch_start_time) % 60)}s")
+    except KeyboardInterrupt:
+        print("Interrupted. Saving the current model...")
+        torch.save(model, f'jass_card_classifier_model_interrupted_epoch_{epoch+1}.pth')
+        print("Model saved. Exiting program.")
+    
+    # Save the model after training
     torch.save(model, 'jass_card_classifier_model.pth')
     print("Model saved.")
 
-except KeyboardInterrupt:
-    print("Interrupted. Saving the current model...")
-    torch.save(model, f'jass_card_classifier_model_interrupted_epoch_{epoch+1}.pth')
-    print("Model saved. Exiting program.")
+    # Generate confusion matrix
+    cm = confusion_matrix([t.numpy() for t in all_targets], [p.numpy() for p in all_predictions])
+    df_cm = pd.DataFrame(cm, index=[i for i in card_mapping.keys()], columns=[i for i in card_mapping.keys()])
+    plt.figure(figsize=(10,7))
+    sns.heatmap(df_cm, annot=True, cmap='Blues', fmt='g')
 
-#Print confusion matrix
-cm = confusion_matrix(all_targets_np, all_predictions_np)
-df_cm = pd.DataFrame(cm, index = [i for i in card_mapping.keys()], columns = [i for i in card_mapping.keys()])
-plt.figure(figsize = (10,7))
-sns.heatmap(df_cm, annot=True, cmap='Blues', fmt='g')
-plt.show()
+    plt.show()
 
-epochs = range(1, len(training_losses)+1)
+    # Plot training loss, validation loss, and accuracy
+    epochs = range(1, len(training_losses) + 1)
 
-# Plot Training Loss
-plt.figure(figsize=(10, 3))
-plt.subplot(1, 3, 1)
-plt.plot(epochs, training_losses, 'r-', label='Training Loss')
-plt.title('Training Loss')
-plt.xlabel('Epoch')
-plt.ylabel('Loss')
-plt.legend()
+    plt.figure(figsize=(10, 3))
+    plt.subplot(1, 3, 1)
+    plt.plot(epochs, training_losses, 'r-', label='Training Loss')
+    plt.title('Training Loss')
+    plt.xlabel('Epoch')
+    plt.ylabel('Loss')
+    plt.legend()
 
-# Plot Validation Loss
-plt.subplot(1, 3, 2)
-plt.plot(epochs, validation_losses, 'b-', label='Validation Loss')
-plt.title('Validation Loss')
-plt.xlabel('Epoch')
-plt.ylabel('Loss')
-plt.legend()
+    plt.subplot(1, 3, 2)
+    plt.plot(epochs, validation_losses, 'b-', label='Validation Loss')
+    plt.title('Validation Loss')
+    plt.xlabel('Epoch')
+    plt.ylabel('Loss')
+    plt.legend()
 
-# Plot Accuracy
-plt.subplot(1, 3, 3)
-plt.plot(epochs, accuracies, 'g-', label='Accuracy')
-plt.title('Accuracy')
-plt.xlabel('Epoch')
-plt.ylabel('Accuracy (%)')
-plt.legend()
+    plt.subplot(1, 3, 3)
+    plt.plot(epochs, accuracies, 'g-', label='Accuracy')
+    plt.title('Accuracy')
+    plt.xlabel('Epoch')
+    plt.ylabel('Accuracy (%)')
+    plt.legend()
+    plt.tight_layout()
 
-plt.tight_layout()
-plt.show()
+    plt.show()
+
+if __name__ == "__main__":
+    main()
