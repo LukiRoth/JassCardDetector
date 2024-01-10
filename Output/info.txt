@@ -1,1 +1,0 @@
-Store the output of your model here, like processed images, prediction results, etc.

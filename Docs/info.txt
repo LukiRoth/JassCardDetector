@@ -1,1 +1,0 @@
-Documentation of your project, including setup instructions, methodology, and usage guidelines.
