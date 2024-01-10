@@ -83,14 +83,23 @@ def create_card_mapping_files():
 
 # Custom dataset class
 class JassCardDataset(Dataset):
+    """
+    A PyTorch Dataset class that handles loading of Jass card images for training a machine learning model.
+    
+    Attributes:
+        directory (str): Directory where card images are stored.
+        transform (callable, optional): Optional transform to be applied on a sample.
+        images (list): List of image filenames in the directory.
+        mapping (dict): Mapping from card IDs to numerical labels.
+    """
+
     def __init__(self, directory, transform=None):
         self.directory = directory
         self.transform = transform
         self.images = [img for img in os.listdir(directory) if img.endswith(('.png', '.jpg', '.jpeg'))]  # Filter for image files
         self.mapping = create_card_mapping_files()
         
-        # Print the total number of images found
-        print("Total number of images found:", len(self.images))
+        print(f"Total number of images found: {len(self.images)}")  # Report the total number of images loaded.
 
     def __len__(self):
         return len(self.images)
@@ -118,16 +127,37 @@ class JassCardDataset(Dataset):
 
 # ResNet34 class
 class ResNet34(nn.Module):
+    """
+    ResNet34 neural network model for classification tasks.
+
+    This class extends the PyTorch Module class, modifying the ResNet34 model
+    (originally trained on ImageNet) for a custom number of output classes.
+
+    Attributes:
+        resnet (nn.Module): The ResNet34 model.
+
+    Args:
+        num_classes (int): The number of classes for the final output layer.
+    """
     def __init__(self, num_classes):
         super(ResNet34, self).__init__()
-        # Update the model initialization with the new 'weights' parameter
+        # Initialize the ResNet34 model with pretrained weights.
+        # The weights parameter specifies using the model trained on ImageNet.
         self.resnet = models.resnet34(weights=models.ResNet34_Weights.IMAGENET1K_V1)
 
-        # Replace the last fully connected layer
-        # ResNet34 uses 512 for fc layers
+         # The feature size before the fully connected layer in ResNet34 is 512.
         self.resnet.fc = nn.Linear(512, num_classes)
 
     def forward(self, x):
+        """
+        Defines the forward pass of the model.
+
+        Args:
+            x (Tensor): The input tensor.
+
+        Returns:
+            Tensor: The output of the ResNet34 model.
+        """
         return self.resnet(x)
 
 def main():
